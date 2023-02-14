@@ -91,12 +91,20 @@ struct database_entry {
 
 
 struct database* database_init(void);
+
 void database_add_entry(struct database* db, const char* picfilename);
 struct database_entry* database_get_next_entry(struct database* db);
 struct database_entry* database_get_prev_entry(struct database* db);
 struct database_entry* database_get_entry_by_id(unsigned int id);
+void database_delete_entry(struct database* db, struct database_entry* e);
+void database_rewind_current_pointer(struct database*);
+
+void database_reassign_ids(void);
 int database_save_to_file(struct database* db, const char* filename);
 int database_destroy(struct database* db);
+
+char* database_entry_get_filename(struct database_entry*);
+char* database_entry_get_tags(struct database_entry*);
 
 
 /**
@@ -136,10 +144,10 @@ struct database* database_init() {
                     //printf("DT_REGULAR: %s\n", dirent_struct->d_name);
                     break;
                 case DT_DIR:
-                    printf("DT_DIR: %s\n", dirent_struct->d_name);
+                    //printf("DT_DIR: %s\n", dirent_struct->d_name);
                     break;
                 case DT_UNKNOWN:
-                    printf("DT_UNKNOWN: %s\n", dirent_struct->d_name);
+                    //printf("DT_UNKNOWN: %s\n", dirent_struct->d_name);
                     break;
                 default:
                     printf("unhandled type: %s\n", dirent_struct->d_name);
@@ -209,14 +217,14 @@ void database_add_entry(struct database* db, const char* picfilename) {
     
     db->num_entries++;
     
-    printf("Added new entry with filename: %s\nTags:%s\n\n", e->filename, e->tags);
+    //printf("Added new entry with filename: %s\nTags:%s\n\n", e->filename, e->tags);
 }
+
 
 void database_delete_entry(struct database* db, struct database_entry* e) {
     
     assert(db);
     assert(e);
-    
     
     /*
      Handling ties between entries (two-linked list pointers)
@@ -227,22 +235,35 @@ void database_delete_entry(struct database* db, struct database_entry* e) {
     {
         e->next_entry->prev_entry = e->prev_entry;
         e->prev_entry->next_entry = e->next_entry;
+        
+        // Current entry pointer management
+        if(e == db->current_entry)
+            db->current_entry = db->first_entry;
     }
     // Deleting at the beginning
-    else if(e->next_entry != NULL)
+    else if(e->next_entry != NULL) {
         e->next_entry->prev_entry = e->prev_entry; // should be NULL in practice
-    // Deleting at the end of the list
-    else if(e->prev_entry != NULL)
-        e->prev_entry->next_entry = e->next_entry; // should be NULL in practice
-    else {
-        printf("database_delete_entry() tie management gone wrong... Or attempting to delete the last remaining entry\n");
-        return;
-    }
+        db->first_entry = e->next_entry;
         
-    // Check whether we're deleting current entry in db
-    // Reset to first in case it is
-    if(e == db->current_entry)
-        db->current_entry = db->first_entry;
+        if(e == db->current_entry)
+            db->current_entry = e->next_entry;
+    }
+    // Deleting at the end of the list
+    else if(e->prev_entry != NULL) {
+        e->prev_entry->next_entry = e->next_entry; // should be NULL in practice
+        db->last_entry = e->prev_entry;
+        
+        if(e == db->current_entry)
+            db->current_entry = db->first_entry;
+    }
+    // Deleting the last remaining entry
+    else {
+        // No ties to manage, only set db pointers to NULL
+        db->first_entry = NULL;
+        db->last_entry = NULL;
+        db->current_entry = NULL;
+    }
+    
     
     free(e->filename);
     free(e->tags);
@@ -302,6 +323,15 @@ int database_save_to_file(struct database* db, const char* filename) {
 }
 
 /**
+ Rewinds pointer to current entry to very beginning
+ */
+void database_rewind_current_pointer(struct database* db) {
+    
+    db->current_entry = db->first_entry;
+}
+
+
+/**
  Clean up
  */
 int database_destroy(struct database* db) {
@@ -317,16 +347,53 @@ int database_destroy(struct database* db) {
     return 0;
 }
 
+char* database_entry_get_filename(struct database_entry* e) {
+    
+    char* nul = "database_entry_get_filename(): NULL database entry given";
+    
+    if(e)
+        return e->filename;
+    else
+        return nul;
+}
+
+char* database_entry_get_tags(struct database_entry* e) {
+    
+    char* nul = "database_entry_get_tags(): NULL database entry given";
+    
+    if(e)
+        return e->tags;
+    else
+        return nul;
+}
+
+
 struct database* db;
+
 
 int main(int argc, char* argv[]) {
     
     db = database_init();
     assert(db);
-
-    database_get_next_entry(db);
     
     
+    
+    database_delete_entry(db, db->first_entry);
+    
+    for(int i = 0 ; i < 10; i++) {
+        struct database_entry* e = database_get_next_entry(db);
+        printf("%d: %s\n", i,database_entry_get_filename(e));
+    }
+    printf("\n");
+    
+    database_delete_entry(db, db->first_entry);
+    
+    database_rewind_current_pointer(db);
+    
+    for(int i = 0 ; i < 10; i++) {
+        struct database_entry* e = database_get_next_entry(db);
+        printf("%d: %s\n", i,database_entry_get_filename(e));
+    }
     
     // Clean up
     database_destroy(db);

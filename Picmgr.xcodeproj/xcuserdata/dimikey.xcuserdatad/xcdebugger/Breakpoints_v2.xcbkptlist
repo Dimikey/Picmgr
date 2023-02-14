@@ -7,16 +7,32 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "53502712-43C7-4870-A4F4-8CEFF0A75C01"
-            shouldBeEnabled = "Yes"
+            uuid = "B3EE2017-588E-46B8-9C02-18D9C5F50A6C"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Picmgr/main.c"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "325"
-            endingLineNumber = "325"
-            landmarkName = "main(argc, argv)"
+            startingLineNumber = "228"
+            endingLineNumber = "228"
+            landmarkName = "database_delete_entry(db, e)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "9AFA9785-A85D-4CD9-88C5-403C674EF172"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Picmgr/main.c"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "296"
+            endingLineNumber = "296"
+            landmarkName = "database_get_next_entry(db)"
             landmarkType = "9">
          </BreakpointContent>
       </BreakpointProxy>
