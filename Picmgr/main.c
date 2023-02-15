@@ -98,6 +98,7 @@ struct database_entry* database_get_prev_entry(struct database* db);
 struct database_entry* database_get_entry_by_id(unsigned int id);
 void database_delete_entry(struct database* db, struct database_entry* e);
 void database_rewind_current_pointer(struct database*);
+void database_print_contents(struct database*);
 
 void database_reassign_ids(void);
 int database_save_to_file(struct database* db, const char* filename);
@@ -264,6 +265,7 @@ void database_delete_entry(struct database* db, struct database_entry* e) {
         db->current_entry = NULL;
     }
     
+    db->num_entries--;
     
     free(e->filename);
     free(e->tags);
@@ -283,7 +285,7 @@ void database_delete_entry_by_id(struct database* db, unsigned int id) {
     
     
     
-    db->num_entries--;
+    
 }
 
 
@@ -324,10 +326,32 @@ int database_save_to_file(struct database* db, const char* filename) {
 
 /**
  Rewinds pointer to current entry to very beginning
+ Use this when reaching the end of the list
  */
 void database_rewind_current_pointer(struct database* db) {
     
     db->current_entry = db->first_entry;
+}
+
+/**
+ Prints contents of a database
+ Rewinds current pointer to beginning
+ */
+
+void database_print_contents(struct database* db) {
+    
+    struct database_entry* e;
+    
+    database_rewind_current_pointer(db);
+    
+    do {
+        e = database_get_next_entry(db);
+        if(e)
+            printf("%s\n",database_entry_get_filename(e));
+    }
+    while(e != NULL);
+    
+    printf("\n");
 }
 
 
@@ -376,24 +400,23 @@ int main(int argc, char* argv[]) {
     db = database_init();
     assert(db);
     
-    
-    
-    database_delete_entry(db, db->first_entry);
-    
-    for(int i = 0 ; i < 10; i++) {
-        struct database_entry* e = database_get_next_entry(db);
-        printf("%d: %s\n", i,database_entry_get_filename(e));
-    }
-    printf("\n");
+    //
+    // TESTS
+    //
+
+    database_print_contents(db);
     
     database_delete_entry(db, db->first_entry);
     
-    database_rewind_current_pointer(db);
+    database_print_contents(db);
     
-    for(int i = 0 ; i < 10; i++) {
-        struct database_entry* e = database_get_next_entry(db);
-        printf("%d: %s\n", i,database_entry_get_filename(e));
-    }
+    // delete even more
+    for(int i = 0; i < 3; i++)
+        database_delete_entry(db, db->first_entry);
+    
+    database_print_contents(db);
+    
+    
     
     // Clean up
     database_destroy(db);
